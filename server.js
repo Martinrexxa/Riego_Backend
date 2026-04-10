@@ -10,6 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, '../frontend/Sis_rie/Public')));
 
 
 
@@ -20,6 +21,9 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
+pool.connect()
+  .then(() => console.log("✅ Conectado a Neon"))
+  .catch(err => console.log("❌ Error conectando a Neon:", err));
 // ======================
 //        HTML
 // ======================
@@ -29,6 +33,7 @@ const pool = new Pool({
 //        LOGIN
 // ======================
 app.post("/api/login", async (req, res) => {
+  console.log("BODY:", req.body);
   const { usuario, contrasena } = req.body;
 
   if (!usuario || !contrasena) {
