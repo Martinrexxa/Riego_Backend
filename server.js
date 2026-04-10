@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../frontend/Sis_rie/Public')));
+//app.use(express.static(path.join(__dirname, '../frontend/Sis_rie/Public')));
 
 
 
@@ -147,6 +147,8 @@ app.get("/api/empleados", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("🔥 Servidor corriendo en http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
 });
