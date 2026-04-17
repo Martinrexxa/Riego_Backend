@@ -124,7 +124,9 @@ app.post("/api/usuarios/create", async (req, res) => {
 // ======================
 app.get("/api/roles", async (req, res) => {
   try {
-    const result = await pool.query(`SELECT "RolID","Nombre" FROM "Roles"`);
+   const result = await pool.query(`
+  SELECT rol_id, nombre FROM roles
+`);
     res.json({ success: true, roles: result.rows });
 
   } catch (err) {
