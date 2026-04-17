@@ -119,6 +119,27 @@ app.post("/api/usuarios/create", async (req, res) => {
   }
 });
 
+app.post("/api/riego", async (req, res) => {
+  try {
+    const { estado } = req.body; // ON / OFF
+
+    console.log("Riego:", estado);
+
+    // Aquí luego puedes guardar en BD si quieres
+
+    return res.json({
+      success: true,
+      message: `Riego ${estado === "ON" ? "activado" : "desactivado"}`
+    });
+
+  } catch (error) {
+    console.log("Error en riego:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error en el servidor"
+    });
+  }
+});
 // ======================
 //      ROLES
 // ======================
