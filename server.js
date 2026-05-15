@@ -256,6 +256,43 @@ app.post("/api/riego", async (req, res) => {
   }
 });
 
+app.post("/api/riego/detener", async (req, res) => {
+  try {
+    if (!valveTransition.inProgress || valveTransition.targetOpen === null) {
+      return res.status(400).json({
+        success: false,
+        message: "No hay un proceso activo para detener"
+      });
+    }
+
+    const reverseOpen = !valveTransition.targetOpen;
+    const now = Date.now();
+    const result = await tuyaControlValve(reverseOpen);
+
+    if (!result.success) {
+      return res.status(502).json({
+        success: false,
+        message: `Tuya error: ${result.lastError?.result?.msg || result.message || JSON.stringify(result)}`
+      });
+    }
+
+    valveTransition.inProgress = true;
+    valveTransition.targetOpen = reverseOpen;
+    valveTransition.action = reverseOpen ? "opening" : "closing";
+    valveTransition.startedAt = now;
+    valveTransition.lastCommandAt = now;
+
+    return res.json({
+      success: true,
+      transition: valveTransition,
+      message: "Proceso revertido correctamente"
+    });
+  } catch (error) {
+    console.log("Error al detener proceso de riego:", error);
+    return res.status(500).json({ success: false, message: "Error en el servidor" });
+  }
+});
+
 app.get("/api/valvula/estado", async (req, res) => {
   try {
     const result = await tuyaGetValveStatus();
