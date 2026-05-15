@@ -102,6 +102,7 @@ const valveTransition = {
   startedAt: null,
   lastCommandAt: null
 };
+const VALVE_TRANSITION_MIN_MS = 17000;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const app = express();
@@ -272,7 +273,15 @@ app.get("/api/valvula/estado", async (req, res) => {
       result.result.find((dp) => typeof dp.value === "boolean");
     const abierta  = switchDp ? switchDp.value : null;
 
-    if (valveTransition.inProgress && abierta !== null && abierta === valveTransition.targetOpen) {
+    const elapsed = valveTransition.startedAt ? Date.now() - valveTransition.startedAt : 0;
+    const minTransitionReached = elapsed >= VALVE_TRANSITION_MIN_MS;
+
+    if (
+      valveTransition.inProgress &&
+      abierta !== null &&
+      abierta === valveTransition.targetOpen &&
+      minTransitionReached
+    ) {
       valveTransition.inProgress = false;
       valveTransition.action = null;
       valveTransition.startedAt = null;
