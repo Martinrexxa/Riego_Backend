@@ -94,6 +94,14 @@ async function tuyaGetValveStatus() {
   const path  = `/v1.0/devices/${TUYA_DEVICE_ID}/status`;
   return tuyaRequest(path, "GET", null, token);
 }
+
+const valveTransition = {
+  inProgress: false,
+  targetOpen: null,
+  action: null,
+  startedAt: null,
+  lastCommandAt: null
+};
 // ─────────────────────────────────────────────────────────────────────────────
 
 const app = express();
@@ -215,6 +223,13 @@ app.post("/api/riego", async (req, res) => {
   try {
     const { estado } = req.body; // "ON" | "OFF"
     const open = estado === "ON";
+    const now = Date.now();
+
+    valveTransition.inProgress = true;
+    valveTransition.targetOpen = open;
+    valveTransition.action = open ? "opening" : "closing";
+    valveTransition.startedAt = now;
+    valveTransition.lastCommandAt = now;
 
     console.log("Riego Tuya:", estado);
     const result = await tuyaControlValve(open);
@@ -224,9 +239,11 @@ app.post("/api/riego", async (req, res) => {
       return res.json({
         success: true,
         codeUsed: result.codeUsed,
+        transition: valveTransition,
         message: `Válvula ${open ? "abierta" : "cerrada"} correctamente`
       });
     } else {
+      valveTransition.inProgress = false;
       return res.status(502).json({
         success: false,
         message: `Tuya error: ${result.lastError?.result?.msg || result.message || JSON.stringify(result)}`
@@ -255,10 +272,17 @@ app.get("/api/valvula/estado", async (req, res) => {
       result.result.find((dp) => typeof dp.value === "boolean");
     const abierta  = switchDp ? switchDp.value : null;
 
+    if (valveTransition.inProgress && abierta !== null && abierta === valveTransition.targetOpen) {
+      valveTransition.inProgress = false;
+      valveTransition.action = null;
+      valveTransition.startedAt = null;
+    }
+
     return res.json({
       success: true,
       abierta,
-      dpCode: switchDp?.code || null
+      dpCode: switchDp?.code || null,
+      transition: valveTransition
     });
   } catch (error) {
     console.log("Error estado valvula:", error);
